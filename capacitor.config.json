@@ -1,0 +1,6 @@
+{
+  "appId": "com.semestersync.app",
+  "appName": "SemesterSync",
+  "webDir": "www",
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}

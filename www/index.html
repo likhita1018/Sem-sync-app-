@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SemesterSync Planner</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f766e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f2;--card:#fff;--ink:#17233b;--mute:#667085;--line:#dfe3e8;--accent:#0f766e;--accent-ink:#fff;--danger:#b42318;--today:#e6f4f1;
+--Lecture:#2a5db0;--Lab:#0f766e;--Tutorial:#a15c07;--Exam:#b42318;--Meeting:#6b46a8;--Other:#5b6472;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1420;--card:#161e2e;--ink:#e8ecf3;--mute:#93a0b4;--line:#27324a;--accent:#2dd4bf;--accent-ink:#06201d;--danger:#f97066;--today:#12302f;--Lecture:#7aa7f0;--Lab:#2dd4bf;--Tutorial:#f0b45a;--Exam:#f97066;--Meeting:#b79af0;--Other:#9aa5b6}}
+:root[data-theme="dark"]{--bg:#0e1420;--card:#161e2e;--ink:#e8ecf3;--mute:#93a0b4;--line:#27324a;--accent:#2dd4bf;--accent-ink:#06201d;--danger:#f97066;--today:#12302f;--Lecture:#7aa7f0;--Lab:#2dd4bf;--Tutorial:#f0b45a;--Exam:#f97066;--Meeting:#b79af0;--Other:#9aa5b6}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'Public Sans',system-ui,sans-serif}
+h1,h2,.num{font-family:'Bricolage Grotesque','Public Sans',system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+h1{font-size:28px;margin:0;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:2px 0 0;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--danger)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat .num{font-size:26px;font-weight:700;line-height:1.1}
+.stat span{color:var(--mute);font-size:13px}
+.stat.warn .num{color:var(--danger)}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.filters input,.filters select,.field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.bar h2{margin:0;font-size:20px;min-width:150px;text-align:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;padding:7px 12px;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.scroll{overflow-x:auto}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(112px,1fr));min-width:800px}
+.dow{padding:8px;font-size:13px;color:var(--mute);font-weight:600;border-bottom:1px solid var(--line)}
+.cell{min-height:112px;padding:6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer}
+.cell:nth-child(7n){border-right:0}
+.cell.out{opacity:.45}
+.cell.today{background:var(--today)}
+.cell .d{font-size:13px;font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between}
+.chip{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);padding:2px 6px;margin-bottom:3px;border-radius:4px;font-size:12px;line-height:1.35;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.clash{outline:1px solid var(--danger)}
+.day{padding:14px 16px;border-bottom:1px solid var(--line)}
+.day h3{margin:0 0 8px;font-size:15px}
+.item{display:flex;gap:12px;align-items:flex-start;padding:8px 10px;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 9%,transparent);border-radius:6px;margin-bottom:6px;cursor:pointer;width:100%;text-align:left;border-top:0;border-right:0;border-bottom:0}
+.item .t{min-width:96px;color:var(--mute);font-size:13px}
+.item b{display:block}
+.item small{color:var(--mute)}
+.flag{color:var(--danger);font-weight:600;font-size:12px}
+.empty{padding:40px 16px;text-align:center;color:var(--mute)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;padding:10px 14px;font-size:13px;color:var(--mute)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;background:var(--c)}
+#modal{position:fixed;inset:0;background:rgba(10,15,25,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+#modal.open{display:flex}
+.dlg{background:var(--card);border-radius:14px;width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:20px}
+.dlg h2{margin:0 0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.err{color:var(--danger);font-size:13px;min-height:18px;margin-bottom:6px}
+.warnbox{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);padding:8px 10px;border-radius:8px;font-size:13px;margin-bottom:10px;display:none}
+.foot{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+@media (max-width:760px){.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}.two{grid-template-columns:1fr}}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}.tabs button{border:1px solid var(--line);background:var(--card);padding:9px 16px;border-radius:8px;cursor:pointer;font-weight:600}.tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#planView{display:none}
+.tbl{width:100%;border-collapse:collapse;min-width:640px}.tbl th,.tbl td{border:1px solid var(--line);padding:6px;vertical-align:top;text-align:left}.tbl th{background:var(--today);font-size:13px}
+.tbl input{width:100%;border:1px solid transparent;background:transparent;padding:4px 6px;border-radius:6px}.tbl input:hover,.tbl input:focus{border-color:var(--line)}
+.cellb{width:100%;min-height:58px;text-align:left;border:0;background:none;cursor:pointer;border-radius:6px;padding:4px 6px}.cellb:hover{background:var(--today)}.cellb b{display:block;font-size:13px}.cellb small{color:var(--mute);display:block}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:14px;border-bottom:1px solid var(--line)}.meta .field{margin:0}
+.sec{padding:14px}.sec h3{margin:0 0 10px;font-size:17px}.sec .btn{margin-top:10px}
+.ptitle{margin:0;padding:14px 14px 0;font-size:22px}
+.sig{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:36px 14px 16px}.sig div{border-top:1px solid var(--ink);padding-top:6px;font-size:13px}
+.draft{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:12px;border:1px dashed var(--accent);border-radius:10px;background:var(--today)}.draft i{color:var(--danger);font-style:normal}
+.cellb.pend{outline:2px dashed var(--accent);background:var(--today)}.pa{display:flex;gap:6px;margin-top:4px}.pa span{cursor:pointer;font-size:12px;padding:1px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.lh{display:flex;gap:14px;align-items:center;padding:14px 14px 0}.lh img{max-height:56px;max-width:140px}.lh b{font-size:18px}.lf{padding:10px 14px 14px;color:var(--mute);font-size:12px;border-top:1px solid var(--line)}
+.sv{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+#facView{display:none}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:70;max-width:90vw}
+.gcell small{display:block;color:var(--mute)}
+#orgView{display:none}
+#cmodal{position:fixed;inset:0;background:rgba(10,15,25,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}#cmodal.open{display:flex}
+@media print{.noprint,#modal,#cmodal{display:none!important}[data-pane]{display:block!important}.tbl{min-width:0}.tbl input,.meta input,.meta select{border:0!important;background:none!important;appearance:none;padding:2px}body{background:#fff;color:#000}.panel,.stat{border-color:#999}.scroll{overflow:visible}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>SemesterSync Planner</h1><p class="sub">One schedule for lectures, labs, exams and faculty meetings</p></div>
+  <div class="row noprint">
+    <button class="btn" id="theme" aria-label="Toggle dark mode">Dark / Light</button>
+    <button class="btn" id="csv">Copy CSV</button>
+    <button class="btn" id="print">Save PDF</button>
+    <button class="btn primary" id="add">New event</button>
+  </div>
+</header>
+
+<nav class="tabs noprint"><button id="tabCal" class="on">Calendar</button><button id="tabPlan">Class timetables and semester plans</button><button id="tabFac">Faculty and room timetables</button><button id="tabOrg">Organisation and letterhead</button></nav>
+<div id="calView">
+<section class="stats" id="stats"></section>
+
+<section class="filters noprint">
+  <input id="q" type="search" placeholder="Search title, room or notes" aria-label="Search events">
+  <select id="fFac" aria-label="Filter by faculty"></select>
+  <select id="fType" aria-label="Filter by type"></select>
+  <select id="fRoom" aria-label="Filter by room"></select>
+</section>
+
+<section class="panel">
+  <div class="bar noprint">
+    <div class="row">
+      <button class="btn" id="prev" aria-label="Previous month">&lsaquo;</button>
+      <h2 id="mt"></h2>
+      <button class="btn" id="next" aria-label="Next month">&rsaquo;</button>
+      <button class="btn" id="todayBtn">Today</button>
+    </div>
+    <div class="seg" role="tablist"><button id="vm" class="on">Month</button><button id="vl">Agenda</button></div>
+  </div>
+  <div class="scroll" id="view"></div>
+  <div class="legend" id="legend"></div>
+</section>
+</div>
+<section class="panel" id="planView"></section>
+<section class="panel" id="facView"></section>
+<section class="panel" id="orgView"></section>
+</div>
+
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="dlg">
+    <h2 id="mTitle">New event</h2>
+    <div class="warnbox" id="clash"></div>
+    <div class="field"><label for="eTitle">Title or subject</label><input id="eTitle" type="text"></div>
+    <div class="two">
+      <div class="field"><label for="eFac">Faculty</label><input id="eFac" list="facList" type="text" placeholder="Choose or type a name"><datalist id="facList"></datalist></div>
+      <div class="field"><label for="eType">Type</label><select id="eType"></select></div>
+    </div>
+    <div class="field"><label for="eDate">Date</label><input id="eDate" type="date"></div>
+    <div class="three">
+      <div class="field"><label for="eStart">Start</label><input id="eStart" type="time"></div>
+      <div class="field"><label for="eEnd">End</label><input id="eEnd" type="time"></div>
+    </div>
+    <div class="field"><label><input type="checkbox" id="eAll"> All day</label></div>
+    <div class="field"><label for="eRoom">Room or location</label><input id="eRoom" type="text" placeholder="e.g. Room 101, Lab 3"></div>
+    <div class="field"><label for="eNotes">Notes for students</label><textarea id="eNotes" rows="3"></textarea></div>
+    <div class="err" id="err"></div>
+    <div class="foot">
+      <button class="btn danger" id="del">Delete</button>
+      <div class="row"><button class="btn" id="cancel">Cancel</button><button class="btn primary" id="save">Save event</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="cmodal" role="dialog" aria-modal="true" aria-labelledby="cTitle">
+  <div class="dlg">
+    <h2 id="cTitle">Timetable slot</h2>
+    <datalist id="subList"></datalist>
+    <div class="field"><label for="cSub">Subject</label><input id="cSub" list="subList" type="text"></div>
+    <div class="field"><label for="cFac">Faculty</label><input id="cFac" list="facList" type="text"></div>
+    <div class="field"><label for="cRoom">Room</label><input id="cRoom" type="text"></div>
+    <div class="foot"><button class="btn danger" id="cClear">Clear slot</button><div class="row"><button class="btn" id="cCancel">Cancel</button><button class="btn primary" id="cSave">Save slot</button></div></div>
+  </div>
+</div>
+
+<script>
+const TYPES=['Lecture','Lab','Tutorial','Exam','Meeting','Other'];
+const TYPE_LABEL={Meeting:'Faculty meeting'};
+const KEY='semestersync.events.v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const todayISO=()=>iso(new Date());
+const fmtT=t=>{if(!t)return'';const[h,m]=t.split(':').map(Number);return((h%12)||12)+':'+String(m).padStart(2,'0')+(h<12?' am':' pm')};
+const label=t=>TYPE_LABEL[t]||t;
+
+let events=[],cursor=new Date(),mode='month',editId=null,delArm=false;
+cursor.setDate(1);
+
+function seed(){
+  const d=new Date(),y=d.getFullYear(),m=d.getMonth();
+  const mk=(day,title,faculty,type,s,e,room,notes)=>({id:crypto.randomUUID?crypto.randomUUID():String(Math.random()),title,faculty,type,date:iso(new Date(y,m,day)),start:s,end:e,allDay:false,room,notes:notes||''});
+  return[
+    mk(14,'Financial Accounting','Dr. Mehta','Lecture','09:00','10:00','Room 101'),
+    mk(14,'Business Statistics','Prof. Rao','Lecture','09:30','10:30','Room 101','Clashes with the lecture above (same room)'),
+    mk(15,'Python for Finance Lab','Dr. Iyer','Lab','11:00','13:00','Lab 3'),
+    mk(16,'Unit Test 1: Auditing','Prof. Kulkarni','Exam','10:00','11:30','Hall A','Bring ID card'),
+    mk(19,'Department Meeting','Dr. Mehta','Meeting','15:00','16:00','Board Room','Agenda: mid-term schedule'),
+    mk(21,'Tutorial: Cost Accounting','Prof. Rao','Tutorial','12:00','13:00','Room 204')
+  ];
+}
+function load(){try{const r=localStorage.getItem(KEY);if(r){events=JSON.parse(r);return}}catch(e){}events=seed()}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(events))}catch(e){}}
+
+const overlap=(a,b)=>{
+  if(a.date!==b.date||a.id===b.id)return false;
+  if(a.allDay||b.allDay||!a.start||!b.start)return false;
+  const ae=a.end||a.start,be=b.end||b.start;
+  return a.start<be&&b.start<ae;
+};
+function clashesFor(ev,list=events){
+  return list.filter(o=>overlap(ev,o)&&((ev.faculty&&ev.faculty===o.faculty)||(ev.room&&ev.room.toLowerCase()===(o.room||'').toLowerCase())));
+}
+const clashSet=()=>new Set(events.filter(e=>clashesFor(e).length).map(e=>e.id));
+
+function filtered(){
+  const q=$('q').value.trim().toLowerCase(),f=$('fFac').value,t=$('fType').value,r=$('fRoom').value;
+  return events.filter(e=>(!f||e.faculty===f)&&(!t||e.type===t)&&(!r||e.room===r)&&(!q||[e.title,e.room,e.notes,e.faculty].join(' ').toLowerCase().includes(q)))
+    .sort((a,b)=>(a.date+(a.allDay?'00:00':a.start||'')).localeCompare(b.date+(b.allDay?'00:00':b.start||'')));
+}
+
+function fillSelects(){
+  const keep=[$('fFac').value,$('fType').value,$('fRoom').value];
+  const facs=[...new Set(events.map(e=>e.faculty).filter(Boolean))].sort();
+  const rooms=[...new Set(events.map(e=>e.room).filter(Boolean))].sort();
+  const opt=(a,v,l)=>`<option value="${esc(v)}">${esc(l)}</option>`;
+  $('fFac').innerHTML=opt(0,'','All faculty')+facs.map(f=>opt(0,f,f)).join('');
+  $('fRoom').innerHTML=opt(0,'','All rooms')+rooms.map(f=>opt(0,f,f)).join('');
+  $('fType').innerHTML=opt(0,'','All types')+TYPES.map(t=>opt(0,t,label(t))).join('');
+  $('fFac').value=keep[0];$('fType').value=keep[1];$('fRoom').value=keep[2];
+  $('facList').innerHTML=facs.map(f=>`<option value="${esc(f)}">`).join('');
+  $('eType').innerHTML=TYPES.map(t=>opt(0,t,label(t))).join('');
+}
+
+function renderStats(){
+  const t=todayISO(),cs=clashSet(),ym=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0');
+  const inMonth=events.filter(e=>e.date.startsWith(ym)).length;
+  const exams=events.filter(e=>e.type==='Exam'&&e.date>=t).length;
+  const facs=new Set(events.map(e=>e.faculty).filter(Boolean)).size;
+  const S=(n,l,c='')=>`<div class="stat ${c}"><div class="num">${n}</div><span>${l}</span></div>`;
+  $('stats').innerHTML=S(inMonth,'events this month')+S(exams,'upcoming exams')+S(facs,'faculty scheduled')+S(cs.size,'events with clashes',cs.size?'warn':'');
+}
+
+function chip(e,cs){
+  const time=e.allDay?'All day':fmtT(e.start);
+  return `<button class="chip ${cs.has(e.id)?'clash':''}" style="--c:var(--${e.type})" data-id="${e.id}" title="${esc(e.title)} · ${esc(e.faculty)} · ${esc(e.room)}">${esc(time)} ${esc(e.title)}</button>`;
+}
+
+function renderMonth(list){
+  const cs=clashSet(),y=cursor.getFullYear(),m=cursor.getMonth(),first=new Date(y,m,1),start=new Date(y,m,1-first.getDay()),t=todayISO();
+  let h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<42;i++){
+    const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=iso(d);
+    if(i>=35&&d.getMonth()!==m)break;
+    const evs=list.filter(e=>e.date===k);
+    h+=`<div class="cell ${d.getMonth()!==m?'out':''} ${k===t?'today':''}" data-date="${k}"><div class="d"><span>${d.getDate()}</span></div>${evs.map(e=>chip(e,cs)).join('')}</div>`;
+  }
+  $('view').innerHTML=`<div class="grid">${h}</div>`;
+}
+
+function renderAgenda(list){
+  const cs=clashSet(),ym=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0');
+  const inM=list.filter(e=>e.date.startsWith(ym));
+  if(!inM.length){$('view').innerHTML='<div class="empty">No events match this month. Choose New event to add one.</div>';return}
+  const days=[...new Set(inM.map(e=>e.date))];
+  $('view').innerHTML=days.map(d=>{
+    const dt=new Date(d+'T00:00');
+    return `<div class="day"><h3>${dt.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})}</h3>`+
+    inM.filter(e=>e.date===d).map(e=>`<button class="item" style="--c:var(--${e.type})" data-id="${e.id}"><span class="t">${e.allDay?'All day':fmtT(e.start)+(e.end?' – '+fmtT(e.end):'')}</span><span><b>${esc(e.title)}</b><small>${esc(label(e.type))} · ${esc(e.faculty||'No faculty')} · ${esc(e.room||'No room')}</small>${e.notes?`<small><br>${esc(e.notes)}</small>`:''}${cs.has(e.id)?'<br><span class="flag">Clash: same faculty or room at this time</span>':''}</span></button>`).join('')+`</div>`;
+  }).join('');
+}
+
+function render(){
+  fillSelects();
+  $('mt').textContent=cursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  $('vm').classList.toggle('on',mode==='month');$('vl').classList.toggle('on',mode==='list');
+  const list=filtered();
+  mode==='month'?renderMonth(list):renderAgenda(list);
+  renderStats();
+  $('legend').innerHTML=TYPES.map(t=>`<span><i style="--c:var(--${t})"></i>${label(t)}</span>`).join('');
+}
+
+function openModal(ev,dateDefault){
+  editId=ev?ev.id:null;delArm=false;
+  $('mTitle').textContent=ev?'Edit event':'New event';
+  $('del').style.display=ev?'':'none';$('del').textContent='Delete';
+  $('eTitle').value=ev?.title||'';$('eFac').value=ev?.faculty||'';$('eType').value=ev?.type||'Lecture';
+  $('eDate').value=ev?.date||dateDefault||todayISO();$('eStart').value=ev?.start||'09:00';$('eEnd').value=ev?.end||'10:00';
+  $('eAll').checked=!!ev?.allDay;$('eRoom').value=ev?.room||'';$('eNotes').value=ev?.notes||'';
+  $('err').textContent='';toggleAll();checkClash();
+  $('modal').classList.add('open');$('eTitle').focus();
+}
+const closeModal=()=>$('modal').classList.remove('open');
+function toggleAll(){const a=$('eAll').checked;$('eStart').disabled=a;$('eEnd').disabled=a}
+function readForm(){
+  return{id:editId||(crypto.randomUUID?crypto.randomUUID():String(Math.random())),title:$('eTitle').value.trim(),faculty:$('eFac').value.trim(),type:$('eType').value,date:$('eDate').value,
+    start:$('eAll').checked?'':$('eStart').value,end:$('eAll').checked?'':$('eEnd').value,allDay:$('eAll').checked,room:$('eRoom').value.trim(),notes:$('eNotes').value.trim()};
+}
+function checkClash(){
+  const ev=readForm(),c=ev.date?clashesFor(ev,events.filter(e=>e.id!==ev.id)):[],box=$('clash');
+  if(c.length){box.style.display='block';box.textContent='Clash with: '+c.map(x=>`${x.title} (${fmtT(x.start)}, ${x.faculty||x.room})`).join('; ')+'. You can still save.'}
+  else box.style.display='none';
+}
+function save(){
+  const ev=readForm();
+  if(!ev.title){$('err').textContent='Enter a title for the event.';return}
+  if(!ev.date){$('err').textContent='Choose a date.';return}
+  if(!ev.allDay){
+    if(!ev.start){$('err').textContent='Choose a start time or mark the event all day.';return}
+    if(ev.end&&ev.end<=ev.start){$('err').textContent='End time must be after the start time.';return}
+  }
+  const i=events.findIndex(e=>e.id===ev.id);
+  i>=0?events[i]=ev:events.push(ev);
+  persist();cursor=new Date(ev.date+'T00:00');cursor.setDate(1);closeModal();render();
+}
+
+$('add').onclick=()=>openModal();
+$('cancel').onclick=closeModal;
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+$('save').onclick=save;
+$('del').onclick=()=>{
+  if(!delArm){delArm=true;$('del').textContent='Confirm delete';return}
+  events=events.filter(e=>e.id!==editId);persist();closeModal();render();
+};
+['eTitle','eFac','eDate','eStart','eEnd','eRoom','eAll'].forEach(id=>$(id).addEventListener('input',checkClash));
+$('eAll').onchange=()=>{toggleAll();checkClash()};
+['q','fFac','fType','fRoom'].forEach(id=>$(id).addEventListener('input',render));
+$('prev').onclick=()=>{cursor.setMonth(cursor.getMonth()-1);render()};
+$('next').onclick=()=>{cursor.setMonth(cursor.getMonth()+1);render()};
+$('todayBtn').onclick=()=>{cursor=new Date();cursor.setDate(1);render()};
+$('vm').onclick=()=>{mode='month';render()};
+$('vl').onclick=()=>{mode='list';render()};
+$('view').addEventListener('click',e=>{
+  const c=e.target.closest('[data-id]');
+  if(c){openModal(events.find(x=>x.id===c.dataset.id));return}
+  const cell=e.target.closest('[data-date]');
+  if(cell)openModal(null,cell.dataset.date);
+});
+$('print').onclick=()=>{try{window.print()}catch(e){}};
+$('csv').onclick=async()=>{
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rows=[['Date','Start','End','Title','Type','Faculty','Room','Notes']].concat(filtered().map(e=>[e.date,e.start,e.end,e.title,e.type,e.faculty,e.room,e.notes]));
+  const text=rows.map(r=>r.map(q).join(',')).join('\n');
+  try{await navigator.clipboard.writeText(text);$('csv').textContent='Copied'}catch(e){$('csv').textContent='Copy failed'}
+  setTimeout(()=>$('csv').textContent='Copy CSV',1800);
+};
+$('theme').onclick=()=>{
+  const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+  r.dataset.theme=dark?'light':'dark';
+};
+
+/* ---------- Class timetables and semester plans ---------- */
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'],PKEY='semestersync.plan.v1';
+const uid=()=>crypto.randomUUID?crypto.randomUUID():String(Math.random());
+const mkClass=n=>({id:uid(),name:n,meta:{ay:'',sem:'Semester I',start:'',end:'',dept:'',by:'',status:'Draft'},slots:[['09:00','10:00'],['10:00','11:00'],['11:15','12:15'],['12:15','13:15'],['14:00','15:00'],['15:00','16:00']].map(([s,e])=>({s,e})),tt:{},subjects:[],weeks:[]});
+let plan={classes:[],sel:null,sub:'tt'},cellKey=null,clsArm=false;
+try{const r=localStorage.getItem(PKEY);if(r)plan=JSON.parse(r)}catch(e){}
+if(!plan.classes||!plan.classes.length)plan={classes:['F.Y.BCom Fintech','S.Y.BCom CFA','T.Y.BCom Fintech'].map(mkClass),sel:null,sub:'tt'};
+if(!plan.sel)plan.sel=plan.classes[0].id;
+const savePlan=()=>{try{localStorage.setItem(PKEY,JSON.stringify(plan))}catch(e){}};
+const cur=()=>plan.classes.find(c=>c.id===plan.sel)||plan.classes[0];
+const shortD=d=>d.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+function ttClash(c,k){const x=c.tt[k];if(!x)return false;const[d,i]=k.split('|'),st=c.slots[i]&&c.slots[i].s;
+  return plan.classes.some(o=>o!==c&&o.slots.some((sl,j)=>{const y=o.tt[d+'|'+j];return y&&sl.s===st&&((x.fac&&y.fac===x.fac)||(x.room&&y.room===x.room))}))}
+const fld=(l,h)=>`<div class="field"><label>${l}</label>${h}</div>`;
+const minp=(k,v,t='text')=>`<input type="${t}" data-m="${k}" value="${esc(v)}">`;
+const msel=(k,v,o)=>`<select data-m="${k}">${o.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('')}</select>`;
+
+function ttHTML(c){
+  const rows=c.slots.map((sl,i)=>`<tr><th><input type="time" data-sl="s" data-i="${i}" value="${sl.s}" aria-label="Start"><input type="time" data-sl="e" data-i="${i}" value="${sl.e}" aria-label="End"><button class="btn noprint" data-act="delSlot" data-i="${i}" style="padding:2px 8px;font-size:12px">Remove</button></th>`+DAYS.map(d=>{const k=d+'|'+i,x=c.tt[k];
+    return `<td><button class="cellb" data-k="${k}">${x?`<b>${esc(x.sub)}</b><small>${esc(x.fac)}${x.room?' · '+esc(x.room):''}</small>${ttClash(c,k)?'<span class="flag">Clash with another class</span>':''}`:'<small class="noprint">+ Add</small>'}</button></td>`}).join('')+'</tr>').join('');
+  const cnt={};Object.values(c.tt).forEach(x=>{cnt[x.sub]=(cnt[x.sub]||0)+1});
+  const sum=c.subjects.filter(s=>s.name).map(s=>{const n=cnt[s.name]||0,t=Number(s.lpw)||0;return `<tr><td>${esc(s.name)}</td><td>${esc(s.fac)}</td><td>${t}</td><td>${n}</td><td>${t?(n===t?'Matches plan':'Check: '+(n<t?'under-scheduled':'over-scheduled')):'No target set'}</td></tr>`}).join('');
+  return `<h3>Weekly timetable</h3><div class="scroll"><table class="tbl"><thead><tr><th>Time</th>${DAYS.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div><button class="btn noprint" data-act="addSlot">Add time slot</button>`+
+  (sum?`<h3 style="margin-top:18px">Lectures per week: plan vs timetable</h3><div class="scroll"><table class="tbl"><thead><tr><th>Subject</th><th>Faculty</th><th>Planned</th><th>Scheduled</th><th>Status</th></tr></thead><tbody>${sum}</tbody></table></div>`:'');
+}
+function spHTML(c){
+  const subj=c.subjects.map((s,i)=>`<tr><td><input data-sf="name" data-i="${i}" value="${esc(s.name)}"></td><td><input data-sf="code" data-i="${i}" value="${esc(s.code)}"></td><td><input data-sf="fac" data-i="${i}" list="facList" value="${esc(s.fac)}"></td><td><input type="number" min="0" data-sf="lpw" data-i="${i}" value="${esc(s.lpw)}"></td><td class="noprint"><button class="btn" data-act="delSubj" data-i="${i}">Remove</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">No subjects yet. Add the subjects taught to this class.</td></tr>';
+  const st=c.meta.start?new Date(c.meta.start+'T00:00'):null;
+  const wk=c.weeks.map((w,i)=>{const dt=st?shortD(new Date(st.getFullYear(),st.getMonth(),st.getDate()+7*i))+' – '+shortD(new Date(st.getFullYear(),st.getMonth(),st.getDate()+7*i+5)):'';
+    return `<tr><td>${i+1}</td><td>${dt}</td><td><input data-wf="topic" data-i="${i}" value="${esc(w.topic)}" placeholder="Unit or topics covered"></td><td><input data-wf="activity" data-i="${i}" value="${esc(w.activity)}" placeholder="Test, assignment, holiday"></td><td class="noprint"><button class="btn" data-act="delWeek" data-i="${i}">Remove</button></td></tr>`}).join('')||`<tr><td colspan="5" class="empty">${st&&c.meta.end?'Choose Generate weeks to fill the semester.':'Set the start and end dates above, then generate the weeks.'}</td></tr>`;
+  return `<h3>Subjects and workload</h3><div class="scroll"><table class="tbl"><thead><tr><th>Subject</th><th>Code</th><th>Faculty</th><th>Lectures per week</th><th class="noprint"></th></tr></thead><tbody>${subj}</tbody></table></div><button class="btn noprint" data-act="addSubj">Add subject</button>`+
+  `<h3 style="margin-top:18px">Week-wise plan</h3><div class="scroll"><table class="tbl"><thead><tr><th>Week</th><th>Dates</th><th>Topics</th><th>Activities</th><th class="noprint"></th></tr></thead><tbody>${wk}</tbody></table></div><div class="row noprint"><button class="btn" data-act="genWeeks">Generate weeks</button><button class="btn" data-act="addWeek">Add week</button></div>`;
+}
+function renderPlan(){
+  const c=cur(),m=c.meta,t=plan.sub;
+  const opts=plan.classes.map(x=>`<option value="${x.id}" ${x.id===c.id?'selected':''}>${esc(x.name)}</option>`).join('');
+  $('planView').innerHTML=`<div class="bar noprint"><div class="row"><select data-sel="1" aria-label="Class" style="padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)">${opts}</select><input id="newCls" placeholder="New class, e.g. S.Y.BCom CFA" style="padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)"><button class="btn" data-act="addClass">Add class</button><button class="btn danger" data-act="delClass">${clsArm?'Confirm delete class':'Delete class'}</button></div><div class="seg"><button data-sub="tt" class="${t==='tt'?'on':''}">Timetable</button><button data-sub="sp" class="${t==='sp'?'on':''}">Semester plan</button></div></div>`+
+  `<h2 class="ptitle">${esc(c.name)}: ${esc(m.sem)} plan and timetable</h2><div class="meta">${fld('Class name','<input data-name="1" value="'+esc(c.name)+'">')}${fld('Semester',msel('sem',m.sem,PERIODS()))}${fld('Academic year',minp('ay',m.ay))}${fld('Start date',minp('start',m.start,'date'))}${fld('End date',minp('end',m.end,'date'))}${fld('Department',minp('dept',m.dept))}${fld('Prepared by',minp('by',m.by))}${fld('Status',msel('status',m.status,['Draft','Submitted to HoD','Approved by HoD','Approved by Management']))}</div>`+
+  `<div class="sec" data-pane="tt" style="${t==='tt'?'':'display:none'}">${ttHTML(c)}</div><div class="sec" data-pane="sp" style="${t==='sp'?'':'display:none'}">${spHTML(c)}</div>`+
+  `<div class="sig"><div>Prepared by: ${esc(m.by)||'Faculty'}</div><div>${esc(org.h||ORG_TYPES[org.type].head)}</div><div>${esc(org.t||ORG_TYPES[org.type].top)}</div></div>`;
+}
+function showTab(p){$('calView').style.display=p?'none':'';$('planView').style.display=p?'block':'none';$('tabCal').classList.toggle('on',!p);$('tabPlan').classList.toggle('on',p);if(p)renderPlan()}
+$('tabCal').onclick=()=>showTab(false);
+$('tabPlan').onclick=()=>showTab(true);
+
+const pv=$('planView');
+pv.addEventListener('input',e=>{const t=e.target,c=cur(),d=t.dataset;
+  if(d.m)c.meta[d.m]=t.value;else if(d.name)c.name=t.value;else if(d.sf)c.subjects[d.i][d.sf]=t.value;else if(d.wf)c.weeks[d.i][d.wf]=t.value;else if(d.sl)c.slots[d.i][d.sl]=t.value;else return;
+  savePlan()});
+pv.addEventListener('change',e=>{const d=e.target.dataset;
+  if(d.sel){plan.sel=e.target.value;clsArm=false;savePlan();renderPlan()}
+  else if(d.name||d.sl||d.m==='sem'||d.m==='start'||d.m==='end')renderPlan()});
+pv.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const d=b.dataset,c=cur(),i=Number(d.i);
+  if(d.sub){plan.sub=d.sub;savePlan();renderPlan();return}
+  if(d.k){openCell(d.k);return}
+  const act=d.act;if(!act)return;
+  if(act==='addClass'){const n=$('newCls').value.trim();if(!n)return;const x=mkClass(n);plan.classes.push(x);plan.sel=x.id}
+  else if(act==='delClass'){if(!clsArm){clsArm=true;renderPlan();return}if(plan.classes.length<2){clsArm=false;renderPlan();return}plan.classes=plan.classes.filter(x=>x!==c);plan.sel=plan.classes[0].id}
+  else if(act==='addSlot')c.slots.push({s:'16:00',e:'17:00'});
+  else if(act==='delSlot'){c.slots.splice(i,1);const nt={};Object.keys(c.tt).forEach(k=>{const[dy,j]=k.split('|');const n=Number(j);if(n<i)nt[k]=c.tt[k];else if(n>i)nt[dy+'|'+(n-1)]=c.tt[k]});c.tt=nt}
+  else if(act==='addSubj')c.subjects.push({name:'',code:'',fac:'',lpw:''});
+  else if(act==='delSubj')c.subjects.splice(i,1);
+  else if(act==='addWeek')c.weeks.push({topic:'',activity:''});
+  else if(act==='delWeek')c.weeks.splice(i,1);
+  else if(act==='genWeeks'){if(!c.meta.start||!c.meta.end)return;const n=Math.min(30,Math.max(1,Math.ceil((new Date(c.meta.end)-new Date(c.meta.start)+864e5)/(7*864e5))));while(c.weeks.length<n)c.weeks.push({topic:'',activity:''})}
+  clsArm=act==='delClass'?false:clsArm;savePlan();renderPlan();
+});
+function openCell(k){
+  const c=cur(),x=c.tt[k]||{},[dy,j]=k.split('|'),sl=c.slots[j];cellKey=k;
+  $('cTitle').textContent=dy+', '+fmtT(sl.s)+' – '+fmtT(sl.e);
+  $('subList').innerHTML=c.subjects.filter(s=>s.name).map(s=>`<option value="${esc(s.name)}">`).join('');
+  $('cSub').value=x.sub||'';$('cFac').value=x.fac||'';$('cRoom').value=x.room||'';
+  $('cmodal').classList.add('open');$('cSub').focus();
+}
+const closeCell=()=>$('cmodal').classList.remove('open');
+$('cCancel').onclick=closeCell;
+$('cmodal').addEventListener('click',e=>{if(e.target.id==='cmodal')closeCell()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCell()});
+$('cClear').onclick=()=>{delete cur().tt[cellKey];savePlan();closeCell();renderPlan()};
+$('cSave').onclick=()=>{const c=cur(),sub=$('cSub').value.trim();
+  if(!sub)delete c.tt[cellKey];
+  else{let fac=$('cFac').value.trim();const s=c.subjects.find(z=>z.name===sub);if(!fac&&s)fac=s.fac||'';c.tt[cellKey]={sub,fac,room:$('cRoom').value.trim()}}
+  savePlan();closeCell();renderPlan()};
+
+/* ---------- Organisation, letterhead, auto-scheduler ---------- */
+const ORG_TYPES={Personal:{cls:'Plan',fac:'Person',sub:'Task',les:'Session',per:'Phase',head:'Reviewer',top:'Self'},College:{cls:'Class',fac:'Faculty',sub:'Subject',les:'Lecture',per:'Semester',head:'Head of Department',top:'Principal / Management'},University:{cls:'Programme',fac:'Faculty',sub:'Course',les:'Lecture',per:'Semester',head:'Head of Department',top:'Dean / Registrar'},Company:{cls:'Team',fac:'Employee',sub:'Project',les:'Session',per:'Quarter',head:'Manager',top:'Director'},Foundation:{cls:'Programme',fac:'Staff member',sub:'Activity',les:'Session',per:'Quarter',head:'Programme Lead',top:'Trustees / Board'}};
+const OKEY='semestersync.org.v1';
+let org={type:'College',name:'',line:'',foot:'',logo:'',h:'',t:''};
+try{const r=localStorage.getItem(OKEY);if(r)org=Object.assign(org,JSON.parse(r))}catch(e){}
+if(!ORG_TYPES[org.type])org.type='College';
+const saveOrg=()=>{try{localStorage.setItem(OKEY,JSON.stringify(org))}catch(e){}};
+const PERIODS=()=>{const p=ORG_TYPES[org.type].per;return(p==='Quarter'?['I','II','III','IV']:['I','II','III','IV','V','VI']).map(x=>p+' '+x)};
+const origT=new WeakMap();
+const KW={class:['cls',0],classes:['cls',1],faculty:['fac',0],subject:['sub',0],subjects:['sub',1],lecture:['les',0],lectures:['les',1],semester:['per',0]};
+function conv(s){const T=ORG_TYPES[org.type];return s.replace(/\b(classes|class|faculty|subjects|subject|lectures|lecture|semester)\b/gi,m=>{const[k,p]=KW[m.toLowerCase()];const w=T[k]+(p?(/s$/.test(T[k])?'es':'s'):'');return m[0]===m[0].toLowerCase()?w.toLowerCase():w})}
+const TXT='h1,h3,th,label,.sub,.stat span,.empty,.legend span,.seg button,.tabs button,.btn,#fFac option:first-child,#fType option:first-child,#cTitle,#mTitle,.flag,.draft b,.draft span';
+function retext(){
+  document.querySelectorAll(TXT).forEach(el=>el.childNodes.forEach(n=>{if(n.nodeType!==3)return;if(!origT.has(n))origT.set(n,n.nodeValue);const v=conv(origT.get(n));if(n.nodeValue!==v)n.nodeValue=v}));
+  document.querySelectorAll('input[placeholder]').forEach(el=>{if(!el.dataset.ph)el.dataset.ph=el.placeholder;el.placeholder=conv(el.dataset.ph)});
+}
+const _render=render;render=function(){_render();retext()};
+
+function busy(c,s,d,i){const st=c.slots[i].s;return plan.classes.some(o=>o!==c&&o.slots.some((sl,j)=>{const y=o.tt[d+'|'+j];return y&&sl.s===st&&((s.fac&&y.fac===s.fac)||(s.room&&y.room===s.room))}))}
+function generate(c){
+  const need=[];c.subjects.filter(s=>s.name&&Number(s.lpw)>0).forEach(s=>{const have=Object.values(c.tt).filter(x=>x.sub===s.name).length;for(let n=have;n<Number(s.lpw);n++)need.push(s)});
+  if(!need.length)return{tt:{},unplaced:['nothing to place. Add subjects with lectures per week in the plan tab, or the timetable is already full'],n:0};
+  let best=null;
+  for(let t=0;t<80;t++){
+    const tt={},un=[],load={},sd={};let cost=0;
+    Object.keys(c.tt).forEach(k=>{const d=k.split('|')[0];load[d]=(load[d]||0)+1;sd[c.tt[k].sub+d]=1});
+    const order=need.slice().sort((a,b)=>(Number(b.lpw)-Number(a.lpw))+(Math.random()-.5)*3);
+    for(const s of order){let pk=null,pc=1e9;
+      for(const d of DAYS)for(let i=0;i<c.slots.length;i++){const k=d+'|'+i;if(c.tt[k]||tt[k]||offDay(s,d)||busy(c,s,d,i))continue;
+        const cs=Math.random()*2+(sd[s.name+d]||0)*10+(load[d]||0)*1.5+i*.4;if(cs<pc){pc=cs;pk=[k,d]}}
+      if(!pk){un.push(s.name);cost+=100;continue}
+      tt[pk[0]]={sub:s.name,fac:s.fac||'',room:s.room||''};sd[s.name+pk[1]]=(sd[s.name+pk[1]]||0)+1;load[pk[1]]=(load[pk[1]]||0)+1;cost+=pc}
+    if(!best||cost<best.cost)best={tt,unplaced:[...new Set(un)],cost,n:Object.keys(tt).length}}
+  return best}
+
+const _rp=renderPlan;
+renderPlan=function(){
+  const c=cur(),real=c.tt;
+  if(!PERIODS().includes(c.meta.sem))c.meta.sem=PERIODS()[0];
+  if(c.draft)c.tt=Object.assign({},real,c.draft.tt);
+  try{_rp()}finally{c.tt=real}
+  const v=$('planView'),h=v.querySelector('.ptitle');
+  if(h)h.insertAdjacentHTML('beforebegin',`<div class="lh">${org.logo?`<img src="${org.logo}" alt="">`:''}<div><b>${esc(org.name||'Your organisation name')}</b><br><small>${esc(org.line)}</small></div></div>`);
+  if(org.foot)v.insertAdjacentHTML('beforeend',`<div class="lf">${esc(org.foot)}</div>`);
+  const pane=v.querySelector('[data-pane="tt"]');
+  if(pane)pane.insertAdjacentHTML('afterbegin',c.draft?`<div class="draft noprint"><div><b>Proposed timetable</b> <span>${Object.keys(c.draft.tt).length} lectures placed. Tap a slot to edit it, or approve or reject it.</span>${c.draft.unplaced.length?'<br><i>Could not place: '+esc(c.draft.unplaced.join(', '))+'</i>':''}</div><div class="row"><button class="btn primary" data-xa="okAll">Approve all</button><button class="btn" data-xa="auto">Regenerate</button><button class="btn danger" data-xa="noAll">Reject all</button></div></div>`:`<div class="draft noprint"><div><b>Auto-generate</b> <span>Fill the empty slots using each subject's lectures per week. You review every slot before it counts.</span></div><div class="row"><button class="btn primary" data-xa="auto">Generate timetable</button></div></div>`);
+  if(c.draft)v.querySelectorAll('.cellb').forEach(b=>{const k=b.dataset.k;if(c.draft.tt[k]){b.classList.add('pend');b.insertAdjacentHTML('beforeend',`<span class="pa noprint"><span role="button" tabindex="0" data-ca="ok" data-k="${k}">Approve</span><span role="button" tabindex="0" data-ca="no" data-k="${k}">Reject</span></span>`)}});
+  retext();
+};
+pv.addEventListener('click',e=>{
+  const c=cur(),s=e.target.closest('[data-ca]'),x=e.target.closest('[data-xa]');
+  if(!s&&!x)return;e.stopPropagation();
+  if(s){const k=s.dataset.k;if(s.dataset.ca==='ok')c.tt[k]=c.draft.tt[k];delete c.draft.tt[k];if(!Object.keys(c.draft.tt).length)c.draft=null}
+  else{const a=x.dataset.xa;
+    if(a==='okAll'){Object.assign(c.tt,c.draft.tt);c.draft=null}
+    else if(a==='noAll')c.draft=null;
+    else if(a==='auto'){c.draft=null;const r=generate(c);c.draft={tt:r.tt,unplaced:r.unplaced}}}
+  savePlan();renderPlan()},true);
+
+let cellTgt='r';
+const _oc=openCell;
+openCell=function(k){const c=cur(),real=c.tt;cellTgt=c.draft&&c.draft.tt[k]?'d':'r';if(cellTgt==='d')c.tt=Object.assign({},real,c.draft.tt);try{_oc(k)}finally{c.tt=real}};
+const tgt=c=>cellTgt==='d'&&c.draft?c.draft.tt:c.tt;
+$('cClear').onclick=()=>{const c=cur();delete tgt(c)[cellKey];if(c.draft&&!Object.keys(c.draft.tt).length)c.draft=null;savePlan();closeCell();renderPlan()};
+$('cSave').onclick=()=>{const c=cur(),sub=$('cSub').value.trim(),t=tgt(c);
+  if(!sub)delete t[cellKey];else{let fac=$('cFac').value.trim();const s=c.subjects.find(z=>z.name===sub);if(!fac&&s)fac=s.fac||'';t[cellKey]={sub,fac,room:$('cRoom').value.trim()}}
+  savePlan();closeCell();renderPlan()};
+
+function renderOrg(){
+  const T=ORG_TYPES[org.type],f=(k,l,ph)=>fld(l,`<input data-o="${k}" value="${esc(org[k])}" placeholder="${esc(ph||'')}">`);
+  $('orgView').innerHTML=`<div class="meta" style="border:0"><h2 style="grid-column:1/-1;margin:0">Organisation and letterhead</h2>`+
+    fld('Organisation type',`<select data-o="type">${Object.keys(ORG_TYPES).map(t=>`<option ${t===org.type?'selected':''}>${t}</option>`).join('')}</select>`)+
+    f('name','Organisation name','e.g. Your College Name')+f('line','Address or tagline (letterhead)','Address, phone, website')+f('foot','Footer note on every printout','e.g. Approved timetable. Subject to change.')+
+    f('h','First signature title',T.head)+f('t','Second signature title',T.top)+
+    fld('Logo',`<input type="file" accept="image/*" id="logoIn">${org.logo?' <button class="btn" data-rm="1">Remove logo</button>':''}<div id="logoMsg" class="err"></div>`)+
+    `</div><div class="lh">${org.logo?`<img src="${org.logo}" alt="">`:''}<div><b>${esc(org.name||'Your organisation name')}</b><br><small>${esc(org.line)}</small></div></div><div class="lf">${esc(org.foot||'Footer preview')}</div>`;
+  retext();
+}
+const ov=$('orgView');
+ov.addEventListener('input',e=>{const o=e.target.dataset.o;if(!o||o==='type')return;org[o]=e.target.value;saveOrg()});
+ov.addEventListener('change',e=>{const t=e.target;
+  if(t.dataset.o==='type'){org.type=t.value;saveOrg();renderOrg();render()}
+  else if(t.id==='logoIn'&&t.files[0])loadLogo(t.files[0])});
+ov.addEventListener('click',e=>{if(e.target.dataset.rm){org.logo='';saveOrg();renderOrg()}});
+function loadLogo(f){const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const sc=Math.min(1,320/im.width),cv=document.createElement('canvas');cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);org.logo=cv.toDataURL('image/png');saveOrg();renderOrg()};im.onerror=()=>{$('logoMsg').textContent='That file could not be read as an image.'};im.src=r.result};r.readAsDataURL(f)}
+
+function show(w){
+  $('calView').style.display=w==='cal'?'':'none';$('planView').style.display=w==='plan'?'block':'none';$('orgView').style.display=w==='org'?'block':'none';
+  [['tabCal','cal'],['tabPlan','plan'],['tabOrg','org']].forEach(([i,k])=>$(i).classList.toggle('on',k===w));
+  if(w==='plan')renderPlan();if(w==='org')renderOrg()}
+$('tabCal').onclick=()=>show('cal');$('tabPlan').onclick=()=>show('plan');$('tabOrg').onclick=()=>show('org');
+
+/* ---------- Rules, server, templates, onboarding ---------- */
+let firstRun=false;try{firstRun=localStorage.getItem(OKEY)===null}catch(e){}
+const offDay=(s,d)=>{const p=plan.people&&plan.people[s.fac];return !!(p&&p.off&&p.off.includes(d))};
+function rulesHTML(c){
+  const facs=[...new Set(c.subjects.map(s=>s.fac).filter(Boolean))],pe=plan.people||{};
+  const fr=facs.map(f=>`<tr><td>${esc(f)}</td>${DAYS.map(d=>`<td><label><input type='checkbox' style='width:auto' data-fo='${esc(f)}' data-d='${d}' ${((pe[f]&&pe[f].off)||[]).includes(d)?'checked':''}> ${d}</label></td>`).join('')}</tr>`).join('');
+  const sr=c.subjects.map((s,i)=>s.name?`<tr><td>${esc(s.name)}</td><td><input data-rr='${i}' value='${esc(s.room||'')}' placeholder='e.g. Room 101'></td></tr>`:'').join('');
+  return `<div class='noprint'><h3 style='margin-top:18px'>Scheduling rules</h3><p class='sub'>Tick the days each faculty is unavailable and set each subject's room. The auto-scheduler follows these, and any slot you place by hand on an unavailable day is flagged.</p>`+
+   (fr?`<div class='scroll'><table class='tbl'><thead><tr><th>Faculty</th><th colspan='6'>Days off</th></tr></thead><tbody>${fr}</tbody></table></div>`:`<div class='empty'>Add subjects with a faculty name to set days off.</div>`)+
+   (sr?`<div class='scroll' style='margin-top:12px'><table class='tbl'><thead><tr><th>Subject</th><th>Room</th></tr></thead><tbody>${sr}</tbody></table></div>`:'')+`</div>`}
+pv.addEventListener('change',e=>{const d=e.target.dataset;
+  if(d.fo){if(d.fo==='__proto__')return;const p=plan.people||(plan.people={}),o=p[d.fo]||(p[d.fo]={off:[]});o.off=o.off.filter(x=>x!==d.d);if(e.target.checked)o.off.push(d.d);savePlan();renderPlan()}
+  else if(d.rr!==undefined){cur().subjects[d.rr].room=e.target.value;savePlan()}});
+
+const SK='semestersync.srv.v1';let srv={url:'',token:'',name:'',role:''},srvPw='',svPlans=[],lastTpl=null;
+try{Object.assign(srv,JSON.parse(localStorage.getItem(SK)||'{}'))}catch(e){}
+const saveSrv=()=>{try{localStorage.setItem(SK,JSON.stringify(srv))}catch(e){}};
+async function api(p,o={}){
+  if(!srv.url)throw new Error('Add the server address in the Organisation tab first.');
+  const r=await fetch(srv.url.replace(/\/$/,'')+p,{method:o.method||'GET',headers:Object.assign({'Content-Type':'application/json'},srv.token?{Authorization:'Bearer '+srv.token}:{}),body:o.body?JSON.stringify(o.body):undefined});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('Server error '+r.status));return j}
+const msg=t=>['svMsg','svMsg2'].forEach(i=>{const el=$(i);if(el)el.textContent=t});
+const fillSvList=()=>{const el=$('svList');if(el)el.innerHTML=`<option value=''>Open a plan from the server</option>`+svPlans.map(p=>`<option value='${esc(p.id)}'>${esc(p.name)} (${esc(p.status)}, ${esc(p.by)})</option>`).join('')};
+const refreshList=()=>srv.token?api('/api/plans').then(r=>{svPlans=r.plans||[];fillSvList()}).catch(e=>msg(e.message)):0;
+function svHTML(c){
+  if(!srv.token)return `<div class='sv noprint'><span class='sub'>Not signed in to a server. Add one in the Organisation tab to share plans and send them for approval.</span></div>`;
+  const s=c.meta.status,r=srv.role,can=[];
+  if((r==='faculty'||r==='admin')&&(s==='Draft'||s==='Returned'))can.push(['submit','Submit to HoD']);
+  if((r==='hod'||r==='admin')&&s==='Submitted to HoD')can.push(['approve','Approve'],['return','Return with comment']);
+  if((r==='management'||r==='admin')&&s==='Approved by HoD')can.push(['approve','Approve'],['return','Return with comment']);
+  return `<div class='sv noprint'><div class='row'><span>Signed in as <b>${esc(srv.name)}</b> (${esc(srv.role)}). Status: <b>${esc(s)}</b></span>${(r==='faculty'||r==='admin')?`<button class='btn' data-sv='push'>Save to server</button>`:''}<select id='svList' aria-label='Plans on the server'></select><button class='btn' data-sv='open'>Open</button></div>${c.meta.note?`<div class='warnbox' style='display:block'>Returned with comment: ${esc(c.meta.note)}</div>`:''}<div class='row'>${can.some(x=>x[0]==='return')?`<input id='svComment' placeholder='Comment (needed to return)' style='padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);flex:1;min-width:180px'>`:''}${can.map(([a,l])=>`<button class='btn ${a==='return'?'danger':'primary'}' data-sv='${a}'>${l}</button>`).join('')}</div><div id='svMsg' class='err'></div></div>`}
+const _rp2=renderPlan;
+renderPlan=function(){
+  _rp2();const c=cur(),v=$('planView');
+  const sp=v.querySelector('[data-pane="sp"]');if(sp)sp.insertAdjacentHTML('beforeend',rulesHTML(c));
+  v.querySelectorAll('.cellb[data-k]').forEach(b=>{const k=b.dataset.k,x=(c.draft&&c.draft.tt[k])||c.tt[k];if(x&&offDay(x,k.split('|')[0]))b.insertAdjacentHTML('beforeend','<span class="flag">Unavailable that day</span>')});
+  const bar=v.querySelector('.bar');if(bar)bar.insertAdjacentHTML('afterend',svHTML(c));
+  fillSvList();
+  const st=v.querySelector('[data-m="status"]');if(st){if(c.meta.status==='Returned')st.insertAdjacentHTML('beforeend','<option selected>Returned</option>');st.disabled=!!srv.token}
+  retext()};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-sv]');if(!b)return;const a=b.dataset.sv,c=cur();
+  try{
+    if(a==='login'){const r=await api('/api/login',{method:'POST',body:{name:srv.name,password:srvPw}});Object.assign(srv,{token:r.token,name:r.name,role:r.role});srvPw='';saveSrv();renderOrg();msg('Logged in as '+r.name+'.');return}
+    if(a==='logout'){srv.token='';srv.role='';saveSrv();renderOrg();return}
+    if(a==='push'||a==='submit'){const{draft,...data}=c;const r=await api('/api/plans/'+encodeURIComponent(c.id),{method:'PUT',body:{data}});c.meta.status=r.status;savePlan();if(a==='push'){renderPlan();refreshList();msg('Saved to server.');return}}
+    if(a==='open'){
+      const id=$('svList').value;if(!id)return;const r=await api('/api/plans/'+encodeURIComponent(id)),d=r.data||{},ok=/^\d\d:\d\d$/;
+      d.id=id;d.name=String(d.name||'Plan');d.meta=Object.assign({sem:'',start:'',end:'',ay:'',dept:'',by:''},d.meta);d.meta.status=r.status;d.meta.note=r.comment||'';
+      d.slots=(Array.isArray(d.slots)?d.slots:[]).map(x=>({s:ok.test(x&&x.s)?x.s:'09:00',e:ok.test(x&&x.e)?x.e:'10:00'}));
+      d.subjects=(Array.isArray(d.subjects)?d.subjects:[]).filter(s=>s&&typeof s==='object');d.weeks=(Array.isArray(d.weeks)?d.weeks:[]).filter(s=>s&&typeof s==='object');
+      const tt={};Object.keys(d.tt&&typeof d.tt==='object'?d.tt:{}).forEach(k=>{const x=d.tt[k];if(/^(Mon|Tue|Wed|Thu|Fri|Sat)\|\d+$/.test(k)&&x&&typeof x==='object')tt[k]={sub:String(x.sub||''),fac:String(x.fac||''),room:String(x.room||'')}});d.tt=tt;delete d.draft;
+      const i=plan.classes.findIndex(x=>x.id===id);i>=0?plan.classes[i]=d:plan.classes.push(d);plan.sel=id;savePlan();renderPlan();return}
+    if(a==='submit'||a==='approve'||a==='return'){const comment=$('svComment')?$('svComment').value:'';const r=await api('/api/plans/'+encodeURIComponent(c.id)+'/status',{method:'POST',body:{action:a,comment}});c.meta.status=r.status;c.meta.note=r.comment||'';savePlan();renderPlan();refreshList()}
+  }catch(err){msg(err.message)}});
+
+const _ro=renderOrg;
+renderOrg=function(){
+  _ro();
+  ov.insertAdjacentHTML('beforeend',`<div class='meta' style='border-top:1px solid var(--line)'><h2 style='grid-column:1/-1;margin:0'>Server: sharing and approvals</h2>`+fld('Server address',`<input data-s='url' value='${esc(srv.url)}' placeholder='https://your-server.example.com'>`)+
+    (srv.token?fld('Signed in',`<b>${esc(srv.name)}</b> (${esc(srv.role)})`)+`<div class='field'><button class='btn' data-sv='logout'>Log out</button></div>`:fld('Name',`<input data-s='name' value='${esc(srv.name)}'>`)+fld('Password',`<input type='password' data-s='pw' autocomplete='current-password'>`)+`<div class='field'><button class='btn primary' data-sv='login'>Log in</button></div>`)+
+    fld('Read a template or old timetable (photo or PDF)',`<input type='file' id='tplIn' accept='image/*,application/pdf'><div id='tplOut'></div>`)+`<div id='svMsg2' class='err' style='grid-column:1/-1'></div></div>`);
+  retext()};
+ov.addEventListener('input',e=>{const k=e.target.dataset.s;if(!k)return;if(k==='pw')srvPw=e.target.value;else{srv[k]=e.target.value;saveSrv()}});
+ov.addEventListener('change',e=>{if(e.target.id==='tplIn'&&e.target.files[0])readTpl(e.target.files[0])});
+async function readTpl(f){
+  const out=$('tplOut');out.textContent='Reading the file. This can take a few seconds.';
+  try{
+    const url=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+    const[m,b64]=url.split(','),r=await api('/api/extract',{method:'POST',body:{data:b64,mediaType:m.match(/:(.*?);/)[1],orgType:org.type}});
+    lastTpl=r.result;const s=lastTpl.subjects||[],t=lastTpl.timetable||[];
+    out.innerHTML=`<div class='warnbox' style='display:block;background:var(--today);color:var(--ink)'>Found ${lastTpl.org&&lastTpl.org.name?esc(lastTpl.org.name)+', ':''}${s.length} subjects and ${t.length} timetable slots. Check them, then choose what to use.</div><div class='row'><button class='btn' data-tp='org'>Use letterhead details</button><button class='btn' data-tp='subj'>Add subjects to current plan</button><button class='btn' data-tp='tt'>Add slots as a proposal</button></div>`;retext();
+  }catch(e){out.textContent=e.message}}
+ov.addEventListener('click',e=>{
+  const b=e.target.closest('[data-tp]');if(!b||!lastTpl)return;const c=cur(),o=lastTpl.org||{};
+  if(b.dataset.tp==='org'){if(o.name)org.name=o.name;if(o.line)org.line=o.line;if(o.footer)org.foot=o.footer;if(o.signature1)org.h=o.signature1;if(o.signature2)org.t=o.signature2;saveOrg();renderOrg();$('tplOut').textContent='Letterhead details applied. Check them above.'}
+  else if(b.dataset.tp==='subj'){let n=0;(lastTpl.subjects||[]).forEach(s=>{if(!c.subjects.some(x=>x.name===s.name)){c.subjects.push({name:s.name,code:s.code,fac:s.faculty,lpw:s.lecturesPerWeek||''});n++}});savePlan();$('tplOut').textContent=n+' added to '+c.name+'. Open its plan tab to review them.'}
+  else{const tt={};(lastTpl.timetable||[]).forEach(t=>{let i=c.slots.findIndex(s=>s.s===t.start);if(i<0){c.slots.push({s:t.start,e:/^\d\d:\d\d$/.test(t.end)?t.end:t.start});i=c.slots.length-1}tt[t.day+'|'+i]={sub:t.subject,fac:t.faculty,room:t.room}});c.draft={tt,unplaced:[]};savePlan();$('tplOut').textContent=Object.keys(tt).length+' slots added as a proposal. Open the plan tab to approve or reject them.'}});
+
+const _show=show;show=function(w){_show(w);if(w==='plan')refreshList()};
+
+function onboard(){
+  document.body.insertAdjacentHTML('beforeend',`<div id='ob' style='position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto'><div style='max-width:440px;width:100%'><h1>Who is this planner for?</h1><p class='sub'>This sets the wording, such as Faculty, Employee or Person, and the letterhead. You can change it later in the Organisation tab.</p><div style='display:grid;gap:10px;margin-top:16px'>${[['Personal','For myself'],['College','For a college'],['University','For a university'],['Company','For a company'],['Foundation','For a foundation']].map(([k,l])=>`<button class='btn' data-ob='${k}' style='padding:14px;text-align:left;font-size:16px'>${l}</button>`).join('')}</div></div></div>`)}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-ob]');if(!b)return;const t=b.dataset.ob;org.type=t;saveOrg();
+  if(t!=='College'){events=[];persist();plan.classes=[mkClass(t==='Personal'?'My weekly plan':ORG_TYPES[t].cls+' 1')];plan.sel=plan.classes[0].id;plan.people={};savePlan()}
+  $('ob').remove();render()});
+if(firstRun)onboard();
+
+/* ---------- PDF, faculty and room timetables, user management ---------- */
+let tabNow='cal',fvMode='fac',fvSel='',usrArm='',usrs=[];
+const toast=t=>{let el=$('toast');if(!el){el=document.createElement('div');el.id='toast';el.className='toast';document.body.appendChild(el)}el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',3500)};
+const L=s=>conv(s);
+const loadJs=urls=>new Promise((res,rej)=>{let i=0;const next=()=>{if(i>=urls.length)return rej(new Error('Could not load the PDF tools. Check your connection.'));const s=document.createElement('script');s.src=urls[i++];s.onload=res;s.onerror=()=>{s.remove();next()};document.head.appendChild(s)};next()});
+let pdfReady=null;
+const ensurePdf=()=>pdfReady||(pdfReady=loadJs(['lib/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js']).then(()=>loadJs(['lib/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.8/dist/jspdf.plugin.autotable.min.js'])).catch(e=>{pdfReady=null;throw e}));
+const PAL=[15,118,110];
+function pdfHead(doc,title,sub){
+  const W=doc.internal.pageSize.getWidth();let y=44,x=40;
+  if(org.logo){try{const p=doc.getImageProperties(org.logo),w=Math.min(120,44*p.width/p.height);doc.addImage(org.logo,'PNG',x,y-16,w,w*p.height/p.width);x+=w+12}catch(e){}}
+  doc.setFont('helvetica','bold').setFontSize(16).setTextColor(20).text(org.name||'Your organisation name',x,y);
+  doc.setFont('helvetica','normal').setFontSize(9).setTextColor(90).text(org.line||'',x,y+14);
+  doc.setDrawColor(190).line(40,y+34,W-40,y+34);
+  doc.setFont('helvetica','bold').setFontSize(13).setTextColor(20).text(title,40,y+56);
+  doc.setFont('helvetica','normal').setFontSize(9).setTextColor(90).text(sub,40,y+71);
+  return y+86}
+function pdfSign(doc,y,left){
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  if(y>H-120){doc.addPage();y=60}
+  y+=48;const T=ORG_TYPES[org.type],names=[left||'Prepared by',org.h||T.head,org.t||T.top],cw=(W-80)/3;
+  names.forEach((n,i)=>{const x=40+i*cw;doc.setDrawColor(40).line(x,y,x+cw-24,y);doc.setFont('helvetica','normal').setFontSize(9).setTextColor(40).text(String(n),x,y+13)});
+  return y}
+function pdfFoot(doc){const n=doc.getNumberOfPages(),W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal').setFontSize(8).setTextColor(110);if(org.foot)doc.text(org.foot,40,H-24);doc.text('Page '+i+' of '+n,W-40,H-24,{align:'right'})}}
+const tbl=(doc,y,head,body,extra)=>{doc.autoTable(Object.assign({startY:y,head:[head],body:body.map(r=>r.map(v=>String(v==null?'':v))),styles:{fontSize:8,cellPadding:4,valign:'top',lineColor:[200,200,200],lineWidth:.4},headStyles:{fillColor:PAL,textColor:255},margin:{left:40,right:40,bottom:44}},extra||{},head[0]==='Time'&&head.length===7?{columnStyles:{0:{cellWidth:66},1:{cellWidth:75},2:{cellWidth:75},3:{cellWidth:75},4:{cellWidth:75},5:{cellWidth:75},6:{cellWidth:74}}}:{}));return doc.lastAutoTable.finalY};
+const pdfH3=(doc,y,t)=>{if(y>doc.internal.pageSize.getHeight()-100){doc.addPage();y=60}doc.setFont('helvetica','bold').setFontSize(11).setTextColor(20).text(t,40,y);return y+8};
+const slug=s=>String(s).replace(/[^\w.-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60)||'timetable';
+
+const slotsAll=()=>{const m={};plan.classes.forEach(c=>c.slots.forEach(s=>{m[s.s+'|'+s.e]=s}));return Object.values(m).sort((a,b)=>a.s.localeCompare(b.s))};
+function items(mode,key){const out=[];plan.classes.forEach(c=>Object.keys(c.tt).forEach(k=>{const x=c.tt[k],p=k.split('|'),sl=c.slots[p[1]];if(!sl)return;const v=mode==='fac'?x.fac:x.room;if(v&&(!key||v===key))out.push({d:p[0],s:sl.s,e:sl.e,sub:x.sub,fac:x.fac,room:x.room,cls:c.name})}));return out}
+const keysOf=mode=>{const k=new Set(items(mode).map(i=>mode==='fac'?i.fac:i.room));if(mode==='fac')plan.classes.forEach(c=>c.subjects.forEach(s=>{if(s.fac)k.add(s.fac)}));return[...k].sort()};
+
+async function buildPdf(){
+  await ensurePdf();const doc=new window.jspdf.jsPDF({unit:'pt',format:'a4'});
+  if(tabNow==='cal'){
+    const ym=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0'),list=filtered().filter(e=>e.date.startsWith(ym)),mt=cursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    const y=pdfHead(doc,'Calendar: '+mt,list.length+' events');
+    tbl(doc,y,['Date','Time','Title',L('Faculty'),'Type','Room'].map(x=>x==='Title'?'Title':x),list.map(e=>[e.date,e.allDay?'All day':fmtT(e.start)+(e.end?' - '+fmtT(e.end):''),e.title,e.faculty||'',L(label(e.type)),e.room||'']));
+    pdfFoot(doc);return{doc,name:slug('calendar-'+mt)+'.pdf'}}
+  if(tabNow==='fac'){
+    const key=fvSel||keysOf(fvMode)[0]||'',sl=slotsAll(),its=items(fvMode,key);
+    const y=pdfHead(doc,(fvMode==='fac'?L('Faculty'):'Room')+' timetable: '+key,its.length+' sessions per week');
+    tbl(doc,y,['Time',...DAYS],sl.map(s=>[fmtT(s.s)+' - '+fmtT(s.e),...DAYS.map(d=>its.filter(i=>i.d===d&&i.s===s.s).map(i=>i.sub+'\n'+i.cls+(fvMode==='fac'?(i.room?' - '+i.room:''):(i.fac?' - '+i.fac:''))).join('\n\n'))]),{columnStyles:{0:{cellWidth:62}}});
+    pdfFoot(doc);return{doc,name:slug((fvMode==='fac'?'faculty-':'room-')+key)+'.pdf'}}
+  const c=cur(),m=c.meta;
+  let y=pdfHead(doc,c.name+': '+m.sem+' timetable and plan',[m.ay&&'Academic year '+m.ay,m.dept,m.by&&'Prepared by '+m.by,'Status: '+m.status].filter(Boolean).join('   |   '));
+  y=pdfH3(doc,y,'Weekly timetable');
+  y=tbl(doc,y,['Time',...DAYS],c.slots.map((sl,i)=>[fmtT(sl.s)+' - '+fmtT(sl.e),...DAYS.map(d=>{const x=c.tt[d+'|'+i];return x?x.sub+(x.fac?'\n'+x.fac:'')+(x.room?'\n'+x.room:''):''})]),{columnStyles:{0:{cellWidth:62}}});
+  if(c.subjects.some(s=>s.name)){y=pdfH3(doc,y+22,L('Subjects and workload'));y=tbl(doc,y,[L('Subject'),'Code',L('Faculty'),L('Lectures per week'),'Room'],c.subjects.filter(s=>s.name).map(s=>[s.name,s.code,s.fac,s.lpw,s.room]))}
+  if(c.weeks.length){const st=m.start?new Date(m.start+'T00:00'):null,fd=d=>d.toLocaleDateString(undefined,{day:'numeric',month:'short'});y=pdfH3(doc,y+22,'Week-wise plan');
+    y=tbl(doc,y,['Week','Dates','Topics','Activities'],c.weeks.map((w,i)=>[i+1,st?fd(new Date(st.getFullYear(),st.getMonth(),st.getDate()+7*i))+' - '+fd(new Date(st.getFullYear(),st.getMonth(),st.getDate()+7*i+5)):'',w.topic,w.activity]),{columnStyles:{0:{cellWidth:36},1:{cellWidth:90}}})}
+  pdfSign(doc,y+10,m.by?'Prepared by: '+m.by:'Prepared by');pdfFoot(doc);
+  return{doc,name:slug(c.name+'-'+m.sem)+'.pdf'}}
+async function savePdf(doc,name){
+  const cap=window.Capacitor,P=cap&&cap.Plugins;
+  if(cap&&cap.isNativePlatform&&cap.isNativePlatform()){
+    if(!P||!P.Filesystem||!P.Share)throw new Error('This app build cannot save files yet. Rebuild the APK from the latest files.');
+    const f=await P.Filesystem.writeFile({path:name,data:doc.output('datauristring').split(',')[1],directory:'CACHE'});
+    await P.Share.share({title:name,url:f.uri,dialogTitle:'Save or send the PDF'});
+  }else doc.save(name)}
+$('print').onclick=async()=>{try{toast('Making the PDF...');const r=await buildPdf();await savePdf(r.doc,r.name);toast('PDF ready.')}catch(e){toast(e.message||'Could not make the PDF.')}};
+
+function renderFac(){
+  const keys=keysOf(fvMode);if(!keys.includes(fvSel))fvSel=keys[0]||'';
+  const its=items(fvMode,fvSel),sl=slotsAll(),by={};its.forEach(i=>{by[i.d+'|'+i.s]=(by[i.d+'|'+i.s]||0)+1});
+  const dbl=Object.values(by).filter(n=>n>1).length,off=fvMode==='fac'?its.filter(i=>offDay({fac:fvSel},i.d)).length:0;
+  const per=DAYS.map(d=>its.filter(i=>i.d===d).length),mx=Math.max(...per,0),S=(n,l,c='')=>`<div class='stat ${c}'><div class='num'>${n}</div><span>${l}</span></div>`;
+  const rows=sl.map(s=>`<tr><th>${fmtT(s.s)} - ${fmtT(s.e)}</th>${DAYS.map(d=>{const a=its.filter(i=>i.d===d&&i.s===s.s);return `<td class='gcell'>${a.map(i=>`<b>${esc(i.sub)}</b><small>${esc(i.cls)}${fvMode==='fac'?(i.room?' \u00b7 '+esc(i.room):''):(i.fac?' \u00b7 '+esc(i.fac):'')}</small>`).join('')}${a.length>1?`<span class='flag'>Double-booked</span>`:''}${fvMode==='fac'&&a.length&&offDay({fac:fvSel},d)?`<span class='flag'>Day off</span>`:''}</td>`}).join('')}</tr>`).join('');
+  $('facView').innerHTML=`<div class='bar noprint'><div class='row'><div class='seg'><button data-fm='fac' class='${fvMode==='fac'?'on':''}'>Faculty</button><button data-fm='room' class='${fvMode==='room'?'on':''}'>Room</button></div><select data-fk='1' aria-label='Choose one'>${keys.map(k=>`<option value='${esc(k)}' ${k===fvSel?'selected':''}>${esc(k)}</option>`).join('')}</select></div></div>`+
+  (keys.length?`<div class='stats' style='padding:14px 14px 0'>${S(its.length,'lectures per week')}${S(new Set(its.map(i=>i.cls)).size,'classes')}${S(mx?DAYS[per.indexOf(mx)]:'None','busiest day')}${S(dbl+off,'clashes',dbl+off?'warn':'')}</div><div class='scroll' style='padding:14px'><table class='tbl'><thead><tr><th>Time</th>${DAYS.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`:`<div class='empty'>Nothing here yet. Add subjects with a faculty name, or fill in a class timetable, and it appears here.</div>`);
+  retext()}
+$('facView').addEventListener('click',e=>{const b=e.target.closest('[data-fm]');if(b){fvMode=b.dataset.fm;fvSel='';renderFac()}});
+$('facView').addEventListener('change',e=>{if(e.target.dataset.fk){fvSel=e.target.value;renderFac()}});
+
+const umsg=t=>{const el=$('usrMsg');if(el)el.textContent=t};
+const usrRows=()=>{const el=$('usrList');if(el)el.innerHTML=`<table class='tbl'><thead><tr><th>Name</th><th>Role</th><th>New password</th><th></th></tr></thead><tbody>${usrs.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.role)}</td><td><input type='password' data-up='${esc(u.name)}' placeholder='8 or more characters' autocomplete='new-password'></td><td><button class='btn' data-us='reset' data-n='${esc(u.name)}'>Reset password</button> <button class='btn danger' data-us='del' data-n='${esc(u.name)}'>${usrArm===u.name?'Confirm remove':'Remove'}</button></td></tr>`).join('')}</tbody></table>`};
+const refreshUsers=()=>api('/api/users').then(r=>{usrs=r.users||[];usrRows()}).catch(e=>umsg(e.message));
+const _ro2=renderOrg;
+renderOrg=function(){
+  _ro2();
+  if(srv.token&&srv.role==='admin'){ov.insertAdjacentHTML('beforeend',`<div class='meta' style='border-top:1px solid var(--line)'><h2 style='grid-column:1/-1;margin:0'>People and logins</h2>`+fld('Name',`<input data-u='name'>`)+fld('Role',`<select data-u='role'><option value='faculty'>Faculty</option><option value='hod'>HoD</option><option value='management'>Management</option><option value='admin'>Admin</option></select>`)+fld('Password (8 or more characters)',`<input type='password' data-u='pw' autocomplete='new-password'>`)+`<div class='field'><button class='btn primary' data-us='add'>Add person</button></div><div id='usrList' style='grid-column:1/-1' class='scroll'></div><div id='usrMsg' class='err' style='grid-column:1/-1'></div></div>`);refreshUsers()}
+  retext()};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-us]');if(!b)return;const a=b.dataset.us,n=b.dataset.n;
+  try{
+    if(a==='add'){const q=k=>document.querySelector(`[data-u='${k}']`);await api('/api/users',{method:'POST',body:{name:q('name').value,role:q('role').value,password:q('pw').value}});q('name').value='';q('pw').value='';umsg('Person added.');await refreshUsers()}
+    else if(a==='reset'){const i=[...document.querySelectorAll('[data-up]')].find(x=>x.dataset.up===n);await api('/api/users/'+encodeURIComponent(n),{method:'PUT',body:{password:i?i.value:''}});if(i)i.value='';umsg('Password changed for '+n+'. They are signed out until they log in again.')}
+    else if(a==='del'){if(usrArm!==n){usrArm=n;usrRows();return}usrArm='';await api('/api/users/'+encodeURIComponent(n),{method:'DELETE'});umsg(n+' was removed.');await refreshUsers()}
+  }catch(err){umsg(err.message)}});
+
+$('tabFac').onclick=()=>show('fac');
+const _show3=show;show=function(w){_show3(w);tabNow=w;$('facView').style.display=w==='fac'?'block':'none';$('tabFac').classList.toggle('on',w==='fac');if(w==='fac')renderFac()};
+
+load();render();
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+<script src="features.js"></script>
+<script src="config.js"></script>
+<script src="sync.js"></script>
+<script src="v5.js"></script>
+</body>
+</html>
